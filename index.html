@@ -1,0 +1,549 @@
+<title>Барабан</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600;800&display=swap">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* Layout: one phone-width column, a drum reel as the single bold element, quiet surfaces around it */
+:root {
+  --glass: rgba(255,255,255,.5); --glass-on: rgba(255,255,255,.82); --glass-line: rgba(255,255,255,.75); --glass-hi: rgba(255,255,255,.95); --glass-shadow: rgba(40,30,90,.22);
+  --bg: #f3f1f8;
+  --surface: #ffffff;
+  --surface-2: #ebe8f4;
+  --ink: #1a1730;
+  --ink-soft: #5d5a78;
+  --line: #d9d5ea;
+  --accent: #e08a00;
+  --accent-ink: #1a1200;
+  --blue: #4a63e7;
+  --ok: #1f9d63;
+  --bad: #d4424a;
+  --f-display: "Unbounded", "Manrope", system-ui, sans-serif;
+  --f-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --glass: rgba(60,54,100,.42); --glass-on: rgba(255,255,255,.17); --glass-line: rgba(255,255,255,.2); --glass-hi: rgba(255,255,255,.3); --glass-shadow: rgba(0,0,0,.5);
+    --bg: #13111f; --surface: #1d1a31; --surface-2: #27233f; --ink: #f2efff; --ink-soft: #a29fc2;
+    --line: #342f55; --accent: #f5b83d; --accent-ink: #1a1200; --blue: #8095ff; --ok: #4fd18f; --bad: #ff7a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --glass: rgba(60,54,100,.42); --glass-on: rgba(255,255,255,.17); --glass-line: rgba(255,255,255,.2); --glass-hi: rgba(255,255,255,.3); --glass-shadow: rgba(0,0,0,.5);
+  --bg: #13111f; --surface: #1d1a31; --surface-2: #27233f; --ink: #f2efff; --ink-soft: #a29fc2;
+  --line: #342f55; --accent: #f5b83d; --accent-ink: #1a1200; --blue: #8095ff; --ok: #4fd18f; --bad: #ff7a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45;
+  padding-block: 12px 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+#app { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 500; }
+p { margin: 0; }
+.muted { color: var(--ink-soft); }
+.top { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.top .title { font-family: var(--f-display); font-size: 16px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 18px; cursor: pointer; flex: none; }
+button, input { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, .tile:focus-visible, .card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.hero { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 4px; }
+.hero p { max-width: 34ch; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 14px; min-height: 112px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; cursor: pointer; }
+.tile:active { transform: scale(.98); }
+.tile .t { font-family: var(--f-display); font-size: 14px; font-weight: 500; line-height: 1.2; }
+.tile .s { font-size: 12.5px; color: var(--ink-soft); }
+.tile.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.tile.primary .s { color: rgba(26,18,0,.7); }
+.badge-n { font-family: var(--f-display); font-size: 26px; font-weight: 700; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; text-align: left; width: 100%; }
+.card .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card .name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--ink-soft); }
+.pill.accent { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--ink); }
+.pill.ok { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ink); }
+.empty { padding: 28px 12px; text-align: center; color: var(--ink-soft); border: 1px dashed var(--line); border-radius: 16px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 13px; }
+input[type=text] { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; width: 100%; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); cursor: pointer; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch .sw { width: 46px; height: 28px; border-radius: 99px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.switch .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch input:checked + .sw { background: var(--ok); }
+.switch input:checked + .sw::after { transform: translateX(18px); }
+.switch input:focus-visible + .sw { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sw-t b { display: block; }
+.sw-t span { font-size: 12.5px; color: var(--ink-soft); }
+.btn { border: 0; border-radius: 14px; padding: 14px 16px; font-weight: 800; cursor: pointer; background: var(--blue); color: #fff; width: 100%; }
+.btn.accent { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: var(--surface-2); color: var(--ink); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.btns { display: flex; flex-direction: column; gap: 8px; }
+
+/* the drum */
+.drum { position: relative; border-radius: 22px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; height: 280px; }
+.drum::before, .drum::after { content: ""; position: absolute; left: 0; right: 0; height: 96px; z-index: 2; pointer-events: none; }
+.drum::before { top: 0; background: linear-gradient(var(--surface-2), transparent); }
+.drum::after { bottom: 0; background: linear-gradient(transparent, var(--surface-2)); }
+.drum .mark { position: absolute; left: 10px; right: 10px; top: 112px; height: 56px; border-radius: 14px; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); z-index: 1; }
+.drum .arrow { position: absolute; top: 128px; width: 0; height: 0; border: 8px solid transparent; z-index: 3; }
+.drum .arrow.l { left: 0; border-left-color: var(--accent); }
+.drum .arrow.r { right: 0; border-right-color: var(--accent); }
+.track { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+.track .it { height: 56px; display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-weight: 500; font-size: 18px; padding: 0 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track .it.win { font-weight: 700; }
+.drum.idle .track .it { opacity: .55; }
+.verify { font-size: 12.5px; display: flex; flex-direction: column; gap: 8px; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 11.5px; word-break: break-all; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.kv { display: flex; flex-direction: column; gap: 4px; }
+.kv b { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+.ok-t { color: var(--ok); font-weight: 800; }
+.bad-t { color: var(--bad); font-weight: 800; }
+.winner { text-align: center; padding: 6px 0; display: flex; flex-direction: column; gap: 4px; }
+.winner .w { font-family: var(--f-display); font-size: 22px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
+
+.overlay { position: fixed; inset: 0; background: rgba(10,8,22,.62); display: flex; align-items: flex-end; justify-content: center; z-index: 50; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.sheet { background: var(--surface); border-radius: 22px; padding: 18px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; }
+.cap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cap-grid button { aspect-ratio: 1.3; font-size: 34px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+.cap-grid button:active { transform: scale(.96); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 600; z-index: 60; max-width: calc(100% - 32px); }
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; width: 100%; height: 100%; }
+.note { font-size: 12.5px; color: var(--ink-soft); }
+.glow { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(60% 40% at 15% 8%, color-mix(in srgb, var(--blue) 30%, transparent), transparent 70%),
+              radial-gradient(55% 38% at 92% 55%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%),
+              radial-gradient(60% 40% at 30% 100%, color-mix(in srgb, var(--blue) 22%, transparent), transparent 70%); }
+#app { position: relative; z-index: 1; }
+/* liquid-glass tab bar */
+#nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  display: flex; gap: 4px; padding: 6px; border-radius: 34px;
+  background: var(--glass); -webkit-backdrop-filter: blur(26px) saturate(200%); backdrop-filter: blur(26px) saturate(200%);
+  border: 1px solid var(--glass-line);
+  box-shadow: 0 12px 32px var(--glass-shadow), inset 0 1.5px 0 var(--glass-hi), inset 0 -1px 0 rgba(255,255,255,.1), inset 0 0 14px rgba(255,255,255,.08); }
+#nav button { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 110px; padding: 9px 0 8px; border: 0; background: transparent;
+  color: var(--ink-soft); border-radius: 28px; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s; }
+#nav button.on { color: var(--ink); background: var(--glass-on); box-shadow: inset 0 1px 0 var(--glass-hi), 0 3px 10px rgba(30,20,80,.16); }
+#nav svg { width: 25px; height: 25px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.avatar { width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--accent)); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-size: 30px; font-weight: 700; }
+.prof { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0; text-align: center; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-family: var(--f-display); font-size: 22px; }
+.stat span { font-size: 12px; color: var(--ink-soft); }
+.steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.status { font-size: 13px; font-weight: 700; min-height: 18px; }
+.pill.me { background: color-mix(in srgb, var(--blue) 24%, transparent); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="glow"></div>
+<div id="app"></div>
+<nav id="nav" aria-label="Навигация"></nav>
+<canvas id="confetti"></canvas>
+
+<script>
+/* ---------- sha256 (ASCII input) ---------- */
+function sha256(ascii) {
+  function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+  var maxWord = Math.pow(2, 32), result = '', words = [], asciiBitLength = ascii.length * 8, i, j;
+  var hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [], primeCounter = k.length, isComposite = {};
+  for (var candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (Math.pow(candidate, .5) * maxWord) | 0;
+      k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+  ascii += '\x80';
+  while (ascii.length % 64 - 56) ascii += '\x00';
+  for (i = 0; i < ascii.length; i++) { j = ascii.charCodeAt(i); words[i >> 2] |= j << ((3 - i) % 4) * 8; }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength);
+  for (j = 0; j < words.length;) {
+    var w = words.slice(j, j += 16), oldHash = hash;
+    hash = hash.slice(0, 8);
+    for (i = 0; i < 64; i++) {
+      var w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4];
+      var temp1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] +
+        (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10)) | 0));
+      var temp2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+    for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (i = 0; i < 8; i++) for (j = 3; j + 1; j--) { var b = (hash[i] >> (j * 8)) & 255; result += ((b < 16) ? 0 : '') + b.toString(16); }
+  return result;
+}
+
+/* ---------- state ---------- */
+var KEY = 'drum_v1';
+/* примеры участников; в рабочей версии здесь ники реальных людей из Telegram */
+var NAMES = ['@alina_k','@timur07','@dania.s','@emir_x','@asel_m','@nurbek_a','@mira_ok','@ruslan_b','@aigerim','@artyom_v','@kamila_s','@beksultan','@sabina_n','@daniyar','@zhanna_t','@ilya_tg','@aibek_k','@malika','@kirill_r','@nuria'];
+var BOT = '@baraban_bot'; /* впиши username своего бота */
+/* Слой для сервера. Здесь демо-ответы; в рабочей версии это запросы к твоему боту (getChatMember и т.д.) */
+var API = {
+  checkBot: function (channel) {
+    return new Promise(function (res) { setTimeout(function () { res({ ok: /^@[A-Za-z][A-Za-z0-9_]{4,31}$/.test(channel), demo: true }); }, 700); });
+  },
+  checkSub: function (g, me) {
+    return new Promise(function (res) { setTimeout(function () { res({ ok: true, demo: true }); }, 600); });
+  }
+};
+function rid(p) { return p + Math.random().toString(36).slice(2, 8); }
+function seedHex() {
+  var a = new Uint8Array(12);
+  try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256); }
+  return Array.prototype.map.call(a, function (x) { return (x < 16 ? '0' : '') + x.toString(16); }).join('');
+}
+function demoPeople(n, from) {
+  var out = [];
+  for (var i = 0; i < n; i++) out.push({ id: rid('u'), name: NAMES[(from + i) % NAMES.length] });
+  return out;
+}
+function makeG(o) {
+  var seed = seedHex();
+  return Object.assign({ id: rid('g'), title: '', prize: '', channel: '', captcha: false, owner: 'me', ownerName: 'Ты',
+    p: [], seed: seed, commit: sha256(seed), status: 'open', result: null, demo: false }, o);
+}
+function initial() {
+  var a = makeG({ title: 'Ночной розыгрыш канала', prize: 'Подписка на месяц', captcha: true, channel: '@demo_channel', checkSub: true, owner: 'other', ownerName: 'Демо-канал', demo: true, p: demoPeople(14, 0) });
+  var b = makeG({ title: 'Розыгрыш для друзей', prize: 'Кружка и набор стикеров', captcha: false, owner: 'other', ownerName: 'Демо-канал', demo: true, p: demoPeople(7, 8) });
+  return { me: { id: 'me', name: '@guest' }, g: [a, b] };
+}
+var S = null;
+try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { S = null; }
+if (!S || !S.g) S = initial();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+/* Внутри Telegram ник берётся из данных пользователя */
+var tg = window.Telegram && window.Telegram.WebApp, TGU = null;
+try { if (tg) { tg.ready(); tg.expand(); TGU = (tg.initDataUnsafe && tg.initDataUnsafe.user) || null; } } catch (e) { TGU = null; }
+if (TGU) { S.me.name = TGU.username ? '@' + TGU.username : (TGU.first_name || 'Участник'); S.me.tg = true; }
+function normNick(v) { v = String(v || '').replace(/[^A-Za-z0-9_.]/g, '').slice(0, 32); return v ? '@' + v : '@guest'; }
+function byId(id) { return S.g.filter(function (g) { return g.id === id; })[0]; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function pname(g, id) { var p = g.p.filter(function (x) { return x.id === id; })[0]; return p ? p.name : '?'; }
+function plural(n, a, b, c) { var m = n % 100, d = n % 10; if (m > 10 && m < 20) return c; if (d === 1) return a; if (d > 1 && d < 5) return b; return c; }
+
+/* ---------- draw (provably fair) ---------- */
+function computeWinner(g, seed) {
+  var ids = g.p.map(function (x) { return x.id; }).sort();
+  var h = sha256(seed + '|' + ids.join(','));
+  var idx = Number(BigInt('0x' + h) % BigInt(ids.length));
+  return { id: ids[idx], hash: h, ids: ids };
+}
+
+/* ---------- views ---------- */
+var view = 'home', param = null, spinning = false;
+var app = document.getElementById('app');
+function go(v, p) { if (spinning) return; view = v; param = p || null; if (v === 'create') botOk = false; render(); window.scrollTo(0, 0); }
+
+function topbar(title, back) {
+  return '<div class="top">' + (back ? '<button class="icon-btn" data-act="back" aria-label="Назад">←</button>' : '') +
+    '<div class="title">' + esc(title) + '</div></div>';
+}
+function gCard(g) {
+  var n = g.p.length, joined = g.p.some(function (x) { return x.id === 'me'; });
+  return '<button class="card" data-act="open" data-id="' + g.id + '">' +
+    '<div class="row"><span class="name">' + esc(g.title) + '</span></div>' +
+    '<div class="muted">' + esc(g.prize) + '</div>' +
+    '<div class="pills">' +
+    '<span class="pill">' + n + ' ' + plural(n, 'участник', 'участника', 'участников') + '</span>' +
+    (g.captcha ? '<span class="pill accent">капча</span>' : '') +
+    (g.status === 'done' ? '<span class="pill ok">завершён</span>' : '') +
+    (joined ? '<span class="pill ok">ты участвуешь</span>' : '') +
+    (g.demo ? '<span class="pill">пример</span>' : '') +
+    '</div></button>';
+}
+function vHome() {
+  var open = S.g.filter(function (g) { return g.status === 'open'; }).length;
+  var mine = S.g.filter(function (g) { return g.owner === 'me'; }).length;
+  var done = S.g.filter(function (g) { return g.status === 'done'; }).length;
+  return '<div class="hero"><h1>Барабан</h1><p class="muted">Розыгрыши, где победителя выбирает барабан, а честность можно проверить самому.</p></div>' +
+    '<div class="tiles">' +
+    '<button class="tile" data-act="go" data-v="list"><span class="t">Розыгрыши</span><span><span class="badge-n">' + open + '</span><span class="s"> открыто</span></span></button>' +
+    '<button class="tile primary" data-act="go" data-v="create"><span class="t">Создать розыгрыш</span><span class="s">с капчей или без</span></button>' +
+    '<button class="tile" data-act="go" data-v="mine"><span class="t">Мои розыгрыши</span><span><span class="badge-n">' + mine + '</span><span class="s"> создано</span></span></button>' +
+    '<button class="tile" data-act="go" data-v="winners"><span class="t">Победители</span><span><span class="badge-n">' + done + '</span><span class="s"> проведено</span></span></button>' +
+    '</div>' +
+    '<button class="tile" data-act="go" data-v="how" style="min-height:0;flex-direction:row;align-items:center"><span class="t">Как проверить честность</span><span class="s">→</span></button>' +
+    '<p class="note">Демо-версия: данные и участники хранятся только на этом устройстве.</p>';
+}
+function vProfile() {
+  var created = S.g.filter(function (g) { return g.owner === 'me'; }).length;
+  var joined = S.g.filter(function (g) { return g.p.some(function (x) { return x.id === 'me'; }); }).length;
+  var wins = S.g.filter(function (g) { return g.status === 'done' && g.result.winner === 'me'; }).length;
+  var ch = S.me.name.replace('@', '').charAt(0).toUpperCase() || '?';
+  return '<div class="prof"><div class="avatar">' + esc(ch) + '</div><h2>' + esc(S.me.name) + '</h2>' +
+    '<span class="pill ' + (S.me.tg ? 'ok' : '') + '">' + (S.me.tg ? 'вход через Telegram' : 'браузер, без Telegram') + '</span></div>' +
+    '<div class="stats"><div class="stat"><b>' + created + '</b><span>создано</span></div><div class="stat"><b>' + joined + '</b><span>участвую</span></div><div class="stat"><b>' + wins + '</b><span>побед</span></div></div>' +
+    (S.me.tg ? '' : '<div class="panel"><label class="f">Твой ник (в Telegram подставится сам)<input type="text" id="myname" maxlength="33" value="' + esc(S.me.name) + '"></label></div>') +
+    '<button class="tile" data-act="go" data-v="mine" style="min-height:0;flex-direction:row;align-items:center"><span class="t">Мои розыгрыши</span><span class="s">→</span></button>' +
+    '<button class="tile" data-act="go" data-v="winners" style="min-height:0;flex-direction:row;align-items:center"><span class="t">Победители</span><span class="s">→</span></button>' +
+    '<button class="tile" data-act="go" data-v="how" style="min-height:0;flex-direction:row;align-items:center"><span class="t">Как проверить честность</span><span class="s">→</span></button>';
+}
+function vList() {
+  var list = S.g.filter(function (g) { return g.status === 'open'; });
+  return topbar('Розыгрыши', true) + (list.length ? list.map(gCard).join('') : '<div class="empty">Открытых розыгрышей пока нет. Создай свой.</div>');
+}
+function vMine() {
+  var list = S.g.filter(function (g) { return g.owner === 'me'; });
+  return topbar('Мои розыгрыши', true) +
+    (list.length ? list.map(gCard).join('') : '<div class="empty">Ты ещё ничего не создавал.</div>') +
+    '<button class="btn accent" data-act="go" data-v="create">Создать розыгрыш</button>';
+}
+function vWinners() {
+  var list = S.g.filter(function (g) { return g.status === 'done'; });
+  return topbar('Победители', true) + (list.length ? list.map(function (g) {
+    return '<button class="card" data-act="open" data-id="' + g.id + '"><span class="name">' + esc(g.title) + '</span>' +
+      '<span class="muted">Победитель: <b style="color:var(--ink)">' + esc(pname(g, g.result.winner)) + '</b> · ' + esc(g.prize) + '</span></button>';
+  }).join('') : '<div class="empty">Победителей пока нет.</div>');
+}
+function vCreate() {
+  return topbar('Новый розыгрыш', true) +
+    '<form class="panel" id="cform">' +
+    '<label class="f">Название<input type="text" id="c_title" maxlength="60" placeholder="Например, Розыгрыш к 10 000 подписчиков"></label>' +
+    '<label class="f">Приз<input type="text" id="c_prize" maxlength="60" placeholder="Что получит победитель"></label>' +
+    '<label class="switch"><span class="sw-t"><b>Проверять подписку на канал</b><span>Бот сам проверит, что участник подписан</span></span>' +
+    '<input type="checkbox" id="c_sub" checked><span class="sw"></span></label>' +
+    '<div id="subbox" class="panel" style="background:var(--bg)">' +
+    '<label class="f">Канал<input type="text" id="c_channel" maxlength="33" placeholder="@channel" autocapitalize="off" autocorrect="off"></label>' +
+    '<ol class="steps"><li>Добавь бота <b>' + esc(BOT) + '</b> в администраторы канала.</li><li>Оставь ему права по умолчанию: для проверки подписки достаточно быть админом.</li><li>Нажми «Проверить бота».</li></ol>' +
+    '<button type="button" class="btn ghost" data-act="checkbot">Проверить бота</button><div class="status" id="botstatus"></div></div>' +
+    '<label class="switch"><span class="sw-t"><b>Капча при участии</b><span>Участник проходит короткую проверку, что он человек</span></span>' +
+    '<input type="checkbox" id="c_captcha" checked><span class="sw"></span></label>' +
+    '<p class="note">Сразу после создания публикуется хеш секретного числа. Победитель считается из него, поэтому подменить результат нельзя.</p>' +
+    '<button class="btn accent" type="submit">Создать</button></form>';
+}
+function vHow() {
+  return topbar('Честность', true) +
+    '<div class="panel"><h2>Как проверить результат</h2>' +
+    '<p>1. При создании розыгрыша организатор получает секретное число. Публикуется только его хеш (отпечаток).</p>' +
+    '<p>2. Когда розыгрыш проведён, число раскрывается. Хеш числа должен совпасть с опубликованным.</p>' +
+    '<p>3. Победитель = хеш от «число + список участников» по модулю числа участников. Любой может пересчитать это сам.</p>' +
+    '<p class="note">Если хеши не совпадают или список участников менялся после старта, значит, результат подделан.</p></div>';
+}
+function drumItems(g, center) {
+  var ids = g.p.map(function (x) { return x.id; }).sort();
+  var n = ids.length, out = '';
+  for (var d = -2; d <= 2; d++) {
+    var id = ids[(((center + d) % n) + n) % n];
+    out += '<div class="it' + (d === 0 && g.status === 'done' ? ' win' : '') + '">' + esc(pname(g, id)) + '</div>';
+  }
+  return out;
+}
+function vDetail(g) {
+  var n = g.p.length, joined = g.p.some(function (x) { return x.id === 'me'; }), mine = g.owner === 'me';
+  var ids = g.p.map(function (x) { return x.id; }).sort();
+  var center = g.status === 'done' ? ids.indexOf(g.result.winner) : 0;
+  var h = topbar(g.title, true) +
+    '<div class="panel"><div><h2>' + esc(g.title) + '</h2><p class="muted">Приз: ' + esc(g.prize) + '</p></div>' +
+    '<div class="pills"><span class="pill">' + n + ' ' + plural(n, 'участник', 'участника', 'участников') + '</span>' +
+    (g.captcha ? '<span class="pill accent">с капчей</span>' : '<span class="pill">без капчи</span>') +
+    (g.checkSub ? '<span class="pill accent">подписка ' + esc(g.channel) + '</span>' : '') +
+    '<span class="pill">от: ' + esc(g.ownerName) + '</span></div></div>';
+  if (n > 0) {
+    h += '<div class="drum ' + (g.status === 'done' ? '' : 'idle') + '" id="drum"><div class="mark"></div><div class="arrow l"></div><div class="arrow r"></div>' +
+      '<div class="track" id="track" style="transform:translateY(0)">' + drumItems(g, center) + '</div></div>';
+  } else {
+    h += '<div class="empty">Участников пока нет. Барабан заработает, когда появится хотя бы двое.</div>';
+  }
+  if (n > 0) {
+    var shown = g.p.slice(0, 40).map(function (x) { return '<span class="pill' + (x.id === 'me' ? ' me' : '') + '">' + esc(x.name) + '</span>'; }).join('');
+    h += '<div class="panel"><h3>Участники</h3><div class="pills">' + shown + (n > 40 ? '<span class="pill">и ещё ' + (n - 40) + '</span>' : '') + '</div></div>';
+  }
+  if (g.status === 'done') {
+    h += '<div class="panel"><div class="winner"><span class="muted">Победитель</span><span class="w">' + esc(pname(g, g.result.winner)) + '</span></div></div>';
+    h += vVerify(g);
+  } else {
+    h += '<div class="btns">';
+    if (!joined) h += '<button class="btn accent" data-act="join" data-id="' + g.id + '">Участвовать</button>';
+    else h += '<button class="btn ghost" disabled>Ты участвуешь</button>';
+    if (mine) {
+      h += '<button class="btn ghost" data-act="fake" data-id="' + g.id + '">Добавить 10 тестовых участников</button>' +
+        '<button class="btn" data-act="draw" data-id="' + g.id + '"' + (n < 2 ? ' disabled' : '') + '>Провести розыгрыш</button>';
+    }
+    h += '</div>';
+    h += '<div class="panel verify"><div class="kv"><b>Хеш секретного числа (опубликован до розыгрыша)</b><div class="mono">' + g.commit + '</div></div></div>';
+  }
+  return h;
+}
+function vVerify(g) {
+  var seedOk = sha256(g.result.seed) === g.commit;
+  var re = computeWinner(g, g.result.seed);
+  var same = re.hash === g.result.hash && re.id === g.result.winner && g.result.ids.join(',') === re.ids.join(',');
+  return '<div class="panel verify"><h3>Проверка результата</h3>' +
+    '<div class="kv"><b>Хеш до розыгрыша</b><div class="mono">' + g.commit + '</div></div>' +
+    '<div class="kv"><b>Раскрытое число</b><div class="mono">' + g.result.seed + '</div></div>' +
+    '<div class="kv"><b>Хеш числа совпал</b><span class="' + (seedOk ? 'ok-t' : 'bad-t') + '">' + (seedOk ? 'Да' : 'Нет') + '</span></div>' +
+    '<div class="kv"><b>Победитель пересчитан</b><span class="' + (same ? 'ok-t' : 'bad-t') + '">' + (same ? 'Совпадает: ' + esc(pname(g, re.id)) : 'Не совпадает') + '</span></div>' +
+    '<div class="kv"><b>Итоговый хеш (число + список участников)</b><div class="mono">' + g.result.hash + '</div></div></div>';
+}
+
+function render() {
+  var html = '';
+  if (view === 'home') html = vHome();
+  else if (view === 'list') html = vList();
+  else if (view === 'mine') html = vMine();
+  else if (view === 'winners') html = vWinners();
+  else if (view === 'create') html = vCreate();
+  else if (view === 'how') html = vHow();
+  else if (view === 'profile') html = vProfile();
+  else if (view === 'detail') { var g = byId(param); html = g ? vDetail(g) : vList(); }
+  app.innerHTML = html;
+  var nm = document.getElementById('myname');
+  if (nm) nm.addEventListener('change', function () {
+    S.me.name = normNick(nm.value); nm.value = S.me.name; save();
+  });
+  renderNav();
+}
+var ICON_HOME = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2V19a1.5 1.5 0 0 1-1.5 1.5h-4v-5.5h-6v5.5H5A1.5 1.5 0 0 1 3.5 19z"/></svg>';
+var ICON_USER = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="3.9"/><path d="M4.5 20.5c.6-3.7 3.7-6 7.5-6s6.9 2.3 7.5 6"/></svg>';
+function renderNav() {
+  var nav = document.getElementById('nav'), onP = view === 'profile';
+  nav.innerHTML = '<button data-nav="home" class="' + (onP ? '' : 'on') + '"' + (onP ? '' : ' aria-current="page"') + '>' + ICON_HOME + 'Главная</button>' +
+    '<button data-nav="profile" class="' + (onP ? 'on' : '') + '"' + (onP ? ' aria-current="page"' : '') + '>' + ICON_USER + 'Профиль</button>';
+}
+document.getElementById('nav').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-nav]'); if (b) go(b.dataset.nav);
+});
+var botOk = false;
+
+/* ---------- toast, captcha ---------- */
+var toastT = null;
+function toast(t) {
+  var old = document.querySelector('.toast'); if (old) old.remove();
+  var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; d.setAttribute('role', 'status');
+  document.body.appendChild(d); clearTimeout(toastT); toastT = setTimeout(function () { d.remove(); }, 2200);
+}
+var CAP = [['🐱', 'кота'], ['🚗', 'машину'], ['🍎', 'яблоко'], ['⚽', 'мяч'], ['🌳', 'дерево'], ['🔑', 'ключ'], ['🎈', 'шарик'], ['🐟', 'рыбу'], ['☂️', 'зонт']];
+function captcha(onOk) {
+  var wrap = document.createElement('div'); wrap.className = 'overlay';
+  function build(err) {
+    var pool = CAP.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 6);
+    var target = pool[Math.floor(Math.random() * pool.length)];
+    wrap.innerHTML = '<div class="sheet" role="dialog" aria-label="Проверка"><h2>Ты не бот?</h2><p>Нажми на ' + target[1] + '</p>' +
+      '<div class="cap-grid">' + pool.map(function (c, i) { return '<button data-i="' + i + '" aria-label="' + c[1] + '">' + c[0] + '</button>'; }).join('') + '</div>' +
+      (err ? '<p class="bad-t">Не то. Попробуй ещё раз.</p>' : '') +
+      '<button class="btn ghost" data-cancel="1">Отмена</button></div>';
+    wrap.querySelectorAll('.cap-grid button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (pool[+b.dataset.i] === target) { wrap.remove(); onOk(); } else build(true);
+      });
+    });
+    wrap.querySelector('[data-cancel]').addEventListener('click', function () { wrap.remove(); });
+  }
+  build(false);
+  document.body.appendChild(wrap);
+}
+
+/* ---------- drum spin ---------- */
+var IH = 56;
+function spin(g, res) {
+  var drum = document.getElementById('drum'), track = document.getElementById('track');
+  var ids = res.ids, n = ids.length, wi = ids.indexOf(res.id);
+  var T = 56, offset = (((wi - T) % n) + n) % n, total = T + 4, html = '';
+  for (var i = 0; i < total; i++) html += '<div class="it">' + esc(pname(g, ids[(i + offset) % n])) + '</div>';
+  track.innerHTML = html; drum.classList.remove('idle');
+  var from = -2 * IH * 0 + 2 * IH, to = -(T * IH) + 2 * IH; from = 2 * IH;
+  track.style.transform = 'translateY(' + from + 'px)';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var dur = reduce ? 10 : 5200, t0 = null;
+  spinning = true;
+  function step(ts) {
+    if (t0 === null) t0 = ts;
+    var x = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - x, 4);
+    track.style.transform = 'translateY(' + (from + (to - from) * e) + 'px)';
+    if (x < 1) requestAnimationFrame(step);
+    else {
+      spinning = false;
+      g.status = 'done'; g.result = { winner: res.id, seed: g.seed, hash: res.hash, ids: ids, at: Date.now() };
+      save(); confetti(); setTimeout(render, 900);
+    }
+  }
+  requestAnimationFrame(step);
+}
+function confetti() {
+  var c = document.getElementById('confetti'), ctx = c.getContext('2d');
+  c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio;
+  var cols = ['#f5b83d', '#8095ff', '#4fd18f', '#ff7a80', '#ffffff'], ps = [];
+  for (var i = 0; i < 110; i++) ps.push({ x: innerWidth / 2, y: innerHeight * 0.4, vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 10 - 3, s: 4 + Math.random() * 5, c: cols[i % 5], r: Math.random() * 6 });
+  var t = 0;
+  (function f() {
+    ctx.clearRect(0, 0, c.width, c.height); t++;
+    ps.forEach(function (p) {
+      p.vy += 0.28; p.x += p.vx; p.y += p.vy; p.r += 0.2;
+      ctx.save(); ctx.translate(p.x * devicePixelRatio, p.y * devicePixelRatio); ctx.rotate(p.r);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.s, -p.s / 2, p.s * 2 * devicePixelRatio / 2, p.s);
+      ctx.restore();
+    });
+    if (t < 140) requestAnimationFrame(f); else ctx.clearRect(0, 0, c.width, c.height);
+  })();
+}
+
+/* ---------- events ---------- */
+app.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-act]'); if (!el) return;
+  var act = el.dataset.act, id = el.dataset.id, g = id ? byId(id) : null;
+  if (act === 'back') { go(view === 'detail' ? (g || byId(param)) && byId(param).owner === 'me' ? 'mine' : 'list' : 'home'); return; }
+  if (act === 'go') { go(el.dataset.v); return; }
+  if (act === 'open') { go('detail', id); return; }
+  if (act === 'join' && g) {
+    var add = function () { g.p.push({ id: 'me', name: S.me.name }); save(); toast('Ты участвуешь'); render(); };
+    var sub = function () {
+      if (!g.checkSub) { add(); return; }
+      toast('Проверяю подписку на ' + g.channel + '…');
+      API.checkSub(g, S.me).then(function (r) { if (r.ok) add(); else toast('Сначала подпишись на ' + g.channel); });
+    };
+    if (g.captcha) captcha(sub); else sub();
+    return;
+  }
+  if (act === 'checkbot') {
+    var ch = (document.getElementById('c_channel').value || '').trim(), st = document.getElementById('botstatus');
+    if (ch && ch.charAt(0) !== '@') { ch = '@' + ch; document.getElementById('c_channel').value = ch; }
+    st.className = 'status'; st.textContent = 'Проверяю…';
+    API.checkBot(ch).then(function (r) {
+      botOk = !!r.ok;
+      st.className = 'status ' + (r.ok ? 'ok-t' : 'bad-t');
+      st.textContent = r.ok ? 'Бот в админах канала найден (демо-проверка)' : 'Введи корректный @username канала';
+    });
+    return;
+  }
+  if (act === 'fake' && g) { g.p = g.p.concat(demoPeople(10, g.p.length)); save(); render(); return; }
+  if (act === 'draw' && g && g.p.length > 1) {
+    var res = computeWinner(g, g.seed);
+    render(); spin(g, res);
+  }
+});
+app.addEventListener('change', function (e) {
+  if (e.target.id === 'c_sub') document.getElementById('subbox').hidden = !e.target.checked;
+});
+app.addEventListener('submit', function (e) {
+  if (e.target.id !== 'cform') return;
+  e.preventDefault();
+  var title = document.getElementById('c_title').value.trim(), prize = document.getElementById('c_prize').value.trim();
+  if (!title || !prize) { toast('Заполни название и приз'); return; }
+  var checkSub = document.getElementById('c_sub').checked;
+  if (checkSub && !botOk) { toast('Сначала добавь бота в админы и нажми «Проверить бота»'); return; }
+  var g = makeG({ title: title, prize: prize, channel: document.getElementById('c_channel').value.trim(), checkSub: checkSub,
+    captcha: document.getElementById('c_captcha').checked, ownerName: S.me.name });
+  S.g.unshift(g); save(); toast('Розыгрыш создан'); go('detail', g.id);
+});
+render();
+</script>
